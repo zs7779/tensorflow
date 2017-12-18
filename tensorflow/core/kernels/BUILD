@@ -269,11 +269,13 @@ cc_library(
 cc_library(
     name = "conv_ops_gpu_hdrs",
     hdrs = ["conv_ops_gpu.h"],
+    deps = ["//third_party/eigen3"],
 )
 
 cc_library(
     name = "gpu_util_hdrs",
     hdrs = ["gpu_utils.h"],
+    deps = ["//third_party/eigen3"],
 )
 
 tf_cc_test(
@@ -605,7 +607,6 @@ cc_library(
         ":reverse_sequence_op",
         ":shape_ops",
         ":slice_op",
-        ":snapshot_op",
         ":split_op",
         ":split_v_op",
         ":strided_slice_op",
@@ -800,12 +801,6 @@ tf_kernel_library(
     name = "slice_op",
     prefix = "slice_op",
     deps = ARRAY_DEPS + [":strided_slice_op"],
-)
-
-tf_kernel_library(
-    name = "snapshot_op",
-    prefix = "snapshot_op",
-    deps = ARRAY_DEPS,
 )
 
 tf_kernel_library(
@@ -1908,6 +1903,7 @@ cc_library(
         ":adjust_hue_op",
         ":adjust_saturation_op",
         ":attention_ops",
+	":extract_patches",
         ":colorspace_op",
         ":crop_and_resize_op",
         ":decode_bmp_op",
@@ -1969,6 +1965,13 @@ tf_kernel_library(
     prefix = "attention_ops",
     deps = IMAGE_DEPS,
 )
+
+tf_kernel_library(
+   name = "extract_patches",
+   prefix = "extract_patches",
+   deps = IMAGE_DEPS,
+)
+
 
 tf_kernel_library(
     name = "colorspace_op",
@@ -6423,32 +6426,4 @@ filegroup(
         ],
     ),
     visibility = ["//tensorflow:__subpackages__"],
-)
-
-# Library to link with when compiling the cwise_op kernels directly,
-# e.g. for selective registration.
-# should not be linked by projects that also link the cwise_op library.
-cc_library(
-    name = "cwise_lib",
-    srcs = [
-        "cwise_ops_common.cc",
-        "meta_support.cc",
-        "quantization_utils.cc",
-    ],
-    hdrs = [
-        "cwise_ops.h",
-        "cwise_ops_common.h",
-        "cwise_ops_gpu_common.cu.h",
-        "cwise_ops_gpu_gradients.cu.h",
-        "cwise_ops_gradients.h",
-        "meta_support.h",
-        "quantization_utils.h",
-    ],
-    deps = [
-        ":bounds_check",
-        "//tensorflow/core:framework",
-        "//tensorflow/core:lib",
-        "//third_party/eigen3",
-        "@gemmlowp//:gemmlowp",
-    ],
 )

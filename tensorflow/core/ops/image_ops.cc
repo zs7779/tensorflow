@@ -1016,6 +1016,42 @@ use_image_if_no_bounding_boxes: Controls behavior if no bounding boxes supplied.
   raise an error.
 )doc");
 
+REGISTER_OP("ExtractPatches")
+    .Input("input: float")
+    .Input("size: int32")
+    .Input("offsets: float")
+    .Output("glimpse: float")
+    .SetShapeFn([](InferenceContext* c) {
+	ShapeHandle input;
+	TF_RETURN_IF_ERROR(c->WithRank(c->input(0), 4, &input));
+	ShapeHandle offsets;
+	TF_RETURN_IF_ERROR(c->WithRank(c->input(2), 3, &offsets));
+    	const Tensor* size_tensor = c->input_tensor(1);
+	DimensionHandle width;
+	DimensionHandle height;
+	if (size_tensor == nullptr) {
+	    width = c->UnknownDim();
+	    height = c->UnknownDim();
+	} else {
+	    if (size_tensor->dtype() != DT_INT32) {
+	    return errors::InvalidArgument(
+	    	"Bad size input type for SetOutputToSizedImage: Expected DT_INT32 "
+	        "but got ",
+		DataTypeString(size_tensor->dtype()), " for input #", 1,
+		" in ", c->DebugString());
+	    }
+	    auto vec = size_tensor->vec<int32>();
+	    height = c->MakeDim(vec(0));
+	    width = c->MakeDim(vec(1));
+	}
+	c->set_output(0, c->MakeShape({c->Dim(input, 0), 
+				    c->Dim(offsets, 1),
+				    height,
+				    width,
+				    c->Dim(input, 3)}));
+	return Status::OK();
+    });
+
 // --------------------------------------------------------------------------
 
 // glimpse = extract_glimpse(input, size, offsets) extract the glimpse
